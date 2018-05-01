@@ -1,6 +1,40 @@
 import random
 import itertools
 import string
+import numpy as np
+import matplotlib.pyplot as plt
+from collections import Counter
+
+def collect_freq(input_file):
+    """ Create sorted list of character frequencies from a df and returns it """
+    counts = Counter()
+    site = None
+    with open(input_file, 'r') as df: 
+        post_site = False
+        for line in df:
+            if line.startswith('#'):
+                continue
+            else:
+                if post_site:
+                    counts += Counter(line.strip())
+                else:
+                    site = line.strip()
+                    post_site = True
+    counts_list = []
+    S           = []
+    counts = counts.most_common()
+    total = 0.0
+    for (key,val) in counts:
+        total += val
+    for (key,val) in counts:
+        S.append(key)
+        counts_list.append(val/total)
+ 
+    return site, counts_list, S
+
+def indiv_freq(input_file):
+    """ Create sorted list of character frequencies for each index up to length of longest password hint """
+
 
 def brute_force(a, b, ans, S=string.ascii_letters):
     """ Password Cracker
@@ -60,18 +94,45 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
     S_list    -- list of allowed characters for each index
     
     """
+    # @TODO FINISH FUNCTION 
     return None
 
+def file_force(a, b, ans, common_list):
+    
+    i = 0
+    with open(common_list, 'r') as df:
+        for line in df:
+            i += 1
+            if line.strip() == ans:
+                return i
+    return -1
 
 
-
-def test():
+def test(x):
     lowercase_freq = []
     lowercase      = ['z', 'j', 'q', 'x', 'k', 'v', 'b', 'p', 'g', 'w', 'y' 'f', 'm', 'c', 'u', 'l', 'd', 'h', 'r', 's', 'n', 'i', 'o', 'a', 't', 'e']
     
-    print(brute_force(1,5,"brute", lowercase))
-    print(freq_force(1,5,"brute", lowercase_freq, lowercase))
     
+    test_file   = "input_format.txt"
+    test_file2  = "input2.txt"
+    common_file = "10-million-password-list-top-1000000.txt" 
+
+    print(brute_force(1,6,"brutes", lowercase))
+    print(freq_force(1,6,"brutes", lowercase_freq, lowercase))
+    print(file_force(1,6,"brutes", common_file))
 
 
-test()
+    title1, freq_test1, S_test1 = collect_freq(test_file)
+    
+    if x:
+        plt.plot(S_test1, freq_test1, label=title1)
+        plt.show()
+    
+    print(title1)
+    print(freq_test1)
+    print(S_test1)
+
+# Call Testing or Main Her
+
+x = input('Do you want plots? 1 - Yes, 0 - No')
+test(x)
