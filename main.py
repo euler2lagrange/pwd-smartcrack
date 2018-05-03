@@ -1,25 +1,58 @@
+import os
+import sys
 import random
 import itertools
 import string
+import operator
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
+from termcolor import cprint
+from pyfiglet import figlet_format
+
+def common_substrings(input_file):
+    """ Takes input file of passwords and returns most common substrings i.e. ALL LENGTH SUBSTRINGS (will take very long time to run)"""
+    counts = Counter()
+    with open(input_file, 'r') as df:
+        for line in df:
+            sline = line.strip()
+            counts += Counter(sline[i:j+1] for j in range(len(sline)) for i in range(j+1))
+    counts = counts.most_common()
+    total = 0.0
+    counts_list = []
+    S           = []
+    for (key,val) in counts:
+        total += val
+    for (key,val) in counts:
+        S.append(key)
+        counts_list.append(val/total)
+    return counts_list, S
+
+def length_n_substrings(input_file, n):
+    """ Similiar to common_substrings except now it will only count occurences of length n substrings and return a sorted list by their frequencies 
+    """
+    counts = Counter()
+    with open(input_file, 'r') as df:
+        for line in df:
+            sline = line.strip()
+            counts += Counter(sline[j:j+n] for j in range(len(sline)-n+1))
+    counts = counts.most_common()
+    total = 0.0
+    counts_list = []
+    S           = []
+    for (key,val) in counts:
+        total += val
+    for (key,val) in counts:
+        S.append(key)
+        counts_list.append(val/total)
+    return counts_list, S
 
 def collect_freq(input_file):
     """ Create sorted list of character frequencies from a df and returns it """
     counts = Counter()
-    site = None
     with open(input_file, 'r') as df: 
-        post_site = False
         for line in df:
-            if line.startswith('#'):
-                continue
-            else:
-                if post_site:
-                    counts += Counter(line.strip())
-                else:
-                    site = line.strip()
-                    post_site = True
+            counts += Counter(line.strip())
     counts_list = []
     S           = []
     counts = counts.most_common()
@@ -28,13 +61,38 @@ def collect_freq(input_file):
         total += val
     for (key,val) in counts:
         S.append(key)
-        counts_list.append(val/total)
- 
-    return site, counts_list, S
+        counts_list.append(val/total) 
+    return counts_list, S
 
 def indiv_freq(input_file):
     """ Create sorted list of character frequencies for each index up to length of longest password hint """
+    counts_list = [{} for _ in range(1000)]
+    with open(input_file, 'r') as df:
+        for line in df:
+            line2 = line.strip()
+            for idx,ch in enumerate(line2):
+                if ch in counts_list[idx]:
+                    (counts_list[idx])[ch] += 1.0
+                else:
+                    (counts_list[idx])[ch] = 1.0
 
+    counts_list = [x for x in counts_list if x != {}]
+    
+    sorted_list = []
+    for counts in counts_list:
+        sorted_list.append(sorted(counts.items(), key=operator.itemgetter(1)))
+    
+    S_list = [[] for _ in range(len(counts_list))]
+    c_list = [[] for _ in range(len(counts_list))]
+    for idx,counts in enumerate(sorted_list):
+        total = 0.0
+        for (key,val) in counts:
+            total += val
+        for (key,val) in counts:
+            S_list[idx].append(key)
+            c_list[idx].append(val/total)
+    
+    return c_list, S_list
 
 def brute_force(a, b, ans, S=string.ascii_letters):
     """ Password Cracker
@@ -94,11 +152,12 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
     S_list    -- list of allowed characters for each index
     
     """
-    # @TODO FINISH FUNCTION 
+    # @TODO  
     return None
 
 def file_force(a, b, ans, common_list):
-    
+    """ Uses list of 1000000 most common passwords to crack ans and        returns number of attempts
+    """
     i = 0
     with open(common_list, 'r') as df:
         for line in df:
@@ -107,32 +166,64 @@ def file_force(a, b, ans, common_list):
                 return i
     return -1
 
+def test():
 
-def test(x):
+
     lowercase_freq = []
+
+    # Ascending order of letter freq in standard english
     lowercase      = ['z', 'j', 'q', 'x', 'k', 'v', 'b', 'p', 'g', 'w', 'y' 'f', 'm', 'c', 'u', 'l', 'd', 'h', 'r', 's', 'n', 'i', 'o', 'a', 't', 'e']
-    
-    
-    test_file   = "input_format.txt"
-    test_file2  = "input2.txt"
+     
+    test_file   = os.path.dirname(os.path.realpath('__file__')) + "/inputfiles/input_file1.txt"
     common_file = "10-million-password-list-top-1000000.txt" 
-
-    print(brute_force(1,6,"brutes", lowercase))
-    print(freq_force(1,6,"brutes", lowercase_freq, lowercase))
-    print(file_force(1,6,"brutes", common_file))
-
-
-    title1, freq_test1, S_test1 = collect_freq(test_file)
     
-    if x:
-        plt.plot(S_test1, freq_test1, label=title1)
+    # Uncomment for simple example of brute,freq, and file crackers
+    #print(brute_force(1,6,"brutes", lowercase))
+    #print(freq_force(1,6,"brutes", lowercase_freq, lowercase))
+    #print(file_force(1,6,"brutes", common_file))
+
+    """ Uncomment for display of first 10 char freq for testfile1
+
+    list_freq_test1, list_S_test1 = indiv_freq(test_file)
+    for i in range(10):
+        plt.plot(list_S_test1[i], list_freq_test1[i])
+        plt.title("Char Freq. for " + str(i) + "th index")
         plt.show()
+    """
     
-    print(title1)
-    print(freq_test1)
-    print(S_test1)
+    # Uncomment for display of simple overall char freq
+    # freq_test1, S_test1 = collect_freq(test_file)
+    # plt.plot(S_test1, freq_test1)
+    # plt.title("Overall Char Freq")
+    # plt.show()
+    
+    
+    # Uncomment for most common substrings of any length
+    # warning: will probably take 1h+
+    #sub_test1, S_sub1 = common_substrings(test_file)
+    #plt.title("Top 30 Most Common Substring Freq.")
+    #plt.plot(S_sub1[:30], sub_test1[:30])
+    #plt.show()    
 
-# Call Testing or Main Her
+    subn_test1, Sn_sub1 = length_n_substrings(test_file, 6)
+    plt.title("Top 30 Most common length 4 substring Freq.")
+    plt.plot(Sn_sub1[:30], subn_test1[:30])
+    plt.show()
 
-x = input('Do you want plots? 1 - Yes, 0 - No')
-test(x)
+
+
+def main():
+    cprint(figlet_format('pwd-cracker', font='smkeyboard'))
+    cprint(figlet_format('@MarkJankovec', font='small'))
+    
+    df  = input('Please specify a training file number [1-10]: ')
+    while (df not in [x+1 for x in range(10)]):
+        df  = input('Please specify a training file number [1-10]: ')
+
+    print('Using input_file' + str(df) + '.txt')
+    # @TODO train
+    print('Finished Training ...')
+    print('Cracking test_file' + str(df) + '.txt') 
+    
+#main()
+test()
