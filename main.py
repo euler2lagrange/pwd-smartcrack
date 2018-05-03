@@ -126,9 +126,8 @@ def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(s
     ret: # of attempts, else if fail to find -1 
     
     """
-
     i = 0
-    exc_num = int(len(S)/2) # Number of least freq elements to exclude
+    exc_num = int(len(S)/(1.3)) # Number of least freq elements to exclude
     while (exc_num >= 0):
         for length in range(a, b+1):
             for attempt in itertools.product(S[exc_num:], repeat=length):
@@ -152,8 +151,22 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
     S_list    -- list of allowed characters for each index
     
     """
-    # @TODO  
-    return None
+    attempts = 0
+    exc_num = [int(len(S_list[i])/1.3) for i in range(len(S_list))]
+    
+    while (sum(exc_num) >= 0):
+        for length in range(a, b+1):
+            for guess in itertools.product(*[(S_list[i])[exc_num[i]:] for i in range(length)]):
+                i += 1
+                guess = ''.join(guess)
+                if guess == ans:
+                    return str(i)
+        for i in range(len(exc_num)):
+            if exc_num[i] >= 1:
+                exc_num[i] = int(exc_num[i]/2)
+            else:
+                exc_num[i] = 0
+    return -1
 
 def file_force(a, b, ans, common_list):
     """ Uses list of 1000000 most common passwords to crack ans and        returns number of attempts
@@ -170,17 +183,35 @@ def test():
 
 
     lowercase_freq = []
-
     # Ascending order of letter freq in standard english
     lowercase      = ['z', 'j', 'q', 'x', 'k', 'v', 'b', 'p', 'g', 'w', 'y' 'f', 'm', 'c', 'u', 'l', 'd', 'h', 'r', 's', 'n', 'i', 'o', 'a', 't', 'e']
      
     test_file   = os.path.dirname(os.path.realpath('__file__')) + "/inputfiles/input_file1.txt"
-    common_file = "10-million-password-list-top-1000000.txt" 
+    common_file = "random_1mill.txt" 
+    example_file = "examplefile.txt"
+
+    # Generate indiv freq for large test file
+    freq_large_list, S_large_list = indiv_freq(common_file)
+    # Generate overall freq for large file
+    freqo_large_list, So_large_list = collect_freq(common_file)
+    
+    print("Freq Force Attempts")
+    print(freq_force(4,6, "jesus1", freqo_large_list, So_large_list[::-1]))
+    print("Indiv Freq Force Attempts")
+    print(freq_indiv_force(4,6,"jesus1",freq_large_list, S_large_list))
     
     # Uncomment for simple example of brute,freq, and file crackers
-    #print(brute_force(1,6,"brutes", lowercase))
-    #print(freq_force(1,6,"brutes", lowercase_freq, lowercase))
-    #print(file_force(1,6,"brutes", common_file))
+    """
+    freq_list, S_list = indiv_freq(example_file)
+    print("Brute Force Attempts")
+    print(brute_force(1,6,"brutes", lowercase))
+    print("Frequency Force Attempts")
+    print(freq_force(1,6,"brutes", lowercase_freq, lowercase))
+    print("File Lookup Force Attempts")
+    print(file_force(1,6,"brutes", common_file))
+    print("Indiv Freq Force Attempts")
+    print(freq_indiv_force(1, 6, "brutes", freq_list, S_list))
+    """
 
     """ Uncomment for display of first 10 char freq for testfile1
 
@@ -200,17 +231,15 @@ def test():
     
     # Uncomment for most common substrings of any length
     # warning: will probably take 1h+
-    #sub_test1, S_sub1 = common_substrings(test_file)
-    #plt.title("Top 30 Most Common Substring Freq.")
-    #plt.plot(S_sub1[:30], sub_test1[:30])
-    #plt.show()    
+    # sub_test1, S_sub1 = common_substrings(test_file)
+    # plt.title("Top 30 Most Common Substring Freq.")
+    # plt.plot(S_sub1[:30], sub_test1[:30])
+    # plt.show()    
 
-    subn_test1, Sn_sub1 = length_n_substrings(test_file, 6)
-    plt.title("Top 30 Most common length 4 substring Freq.")
-    plt.plot(Sn_sub1[:30], subn_test1[:30])
-    plt.show()
-
-
+    # subn_test1, Sn_sub1 = length_n_substrings(test_file, 6)
+    # plt.title("Top 30 Most common length 4 substring Freq.")
+    # plt.plot(Sn_sub1[:30], subn_test1[:30])
+    # plt.show()
 
 def main():
     cprint(figlet_format('pwd-cracker', font='smkeyboard'))
@@ -219,7 +248,7 @@ def main():
     df  = input('Please specify a training file number [1-10]: ')
     while (df not in [x+1 for x in range(10)]):
         df  = input('Please specify a training file number [1-10]: ')
-
+    
     print('Using input_file' + str(df) + '.txt')
     # @TODO train
     print('Finished Training ...')
