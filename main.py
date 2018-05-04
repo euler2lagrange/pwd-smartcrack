@@ -10,6 +10,9 @@ from collections import Counter
 from termcolor import cprint
 from pyfiglet import figlet_format
 
+
+LIMIT = 1000000000
+
 def common_substrings(input_file):
     """ Takes input file of passwords and returns most common substrings i.e. ALL LENGTH SUBSTRINGS (will take very long time to run)"""
     counts = Counter()
@@ -95,6 +98,7 @@ def indiv_freq(input_file):
     return c_list, S_list
 
 def brute_force(a, b, ans, S=string.ascii_letters):
+    global LIMIT
     """ Password Cracker
 
     a   -- min length of password
@@ -112,12 +116,13 @@ def brute_force(a, b, ans, S=string.ascii_letters):
             attempt = ''.join(attempt)
             if attempt == ans:
                 return str(i)
-            if i >= 300000000:
-                print("Greater than 300 million attempts ...giving up now")
+            if i >= LIMIT:
+                print("Exceeding attempt limit ...giving up now")
                 return -1
     return -1
 
 def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(string.ascii_letters))], S=string.ascii_letters):
+    global LIMIT
     """ Frequency based Password Cracker
 
     a    -- min length of password
@@ -138,8 +143,8 @@ def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(s
                 attempt = ''.join(attempt)
                 if attempt == ans:
                     return str(i)
-                if i >= 300000000:
-                    print("Greater than 300 million attempts ...giving up now")
+                if i >= LIMIT:
+                    print("Exceeding attempt limit ...giving up now")
                     return -1
         if exc_num >= 1:
             exc_num = int(exc_num/2.0)
@@ -157,6 +162,7 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
     S_list    -- list of allowed characters for each index
     
     """
+    global LIMIT
     attempts = 0
     exc_num = [int(len(S_list[i])/2.0) for i in range(len(S_list))]
     
@@ -167,8 +173,8 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
                 guess = ''.join(guess)
                 if guess == ans:
                     return str(i)
-                if i >= 300000000:
-                    print("Greater than 300 million attempts ...giving up now")
+                if i >= LIMIT:
+                    print("Exceeding attempt limit ...giving up now")
                     return -1
         for i in range(len(exc_num)):
             if exc_num[i] >= 1:
@@ -259,7 +265,6 @@ def demo(input_file, test_file):
     # plt.title("Most common substrings")
     # plt.show()
 
-
     os.path.expanduser(u"~")
 
     common_file = "random_1mill.txt" 
@@ -269,14 +274,17 @@ def demo(input_file, test_file):
     freqc_list, Sc_list = collect_freq(input_file)
     print('Finished Training ...')
     
-    plt.plot(Sc_list, freqc_list)
-    plt.title("Overall Char Freq")
-    plt.show()
 
-    for i in range(10):
-        plt.plot(Si_list[i], freqi_list[i])
-        plt.title("Char Freq. for " + str(i) + "th index")
+    x = input("Do you want to see character frequency plots? 1 = Yes, 0 = No : ")
+    if x:
+        plt.plot(Sc_list, freqc_list)
+        plt.title("Overall Char Freq")
         plt.show()
+
+        for i in range(10):
+            plt.plot(Si_list[i], freqi_list[i])
+            plt.title("Char Freq. for " + str(i) + "th index")
+            plt.show()
     
     # Grab three random lines (file was already randomized so adjacent passwords aren't related)
     rand = random.randint(0, 49998)
@@ -290,6 +298,8 @@ def demo(input_file, test_file):
     for trunc, line in enumerate(lines):
         chl.append(line[:4+trunc])
     
+    chl.append("bambanek")
+
     for line in chl:
 
         ans = line.strip()
@@ -308,6 +318,8 @@ def demo(input_file, test_file):
         tries = freq_indiv_force(len(ans), len(ans), ans, freqi_list, Si_list)
         if tries != -1:
             print("Indiv Freq attempts on " + ans + " :" + str(tries))
+    
+    print("Exiting")
 
 def main():
     cprint(figlet_format('pwd-cracker', font='smkeyboard'))
@@ -322,6 +334,5 @@ def main():
     
     demo(train,test)
 
-    
 main()
 #test()
