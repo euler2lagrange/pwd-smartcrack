@@ -111,7 +111,10 @@ def brute_force(a, b, ans, S=string.ascii_letters):
             i += 1
             attempt = ''.join(attempt)
             if attempt == ans:
-                return str(i) 
+                return str(i)
+            if i >= 300000000:
+                print("Greater than 300 million attempts ...giving up now")
+                return -1
     return -1
 
 def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(string.ascii_letters))], S=string.ascii_letters):
@@ -127,7 +130,7 @@ def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(s
     
     """
     i = 0
-    exc_num = int(len(S)/(1.3)) # Number of least freq elements to exclude
+    exc_num = int(len(S)/2.0) # Number of least freq elements to exclude
     while (exc_num >= 0):
         for length in range(a, b+1):
             for attempt in itertools.product(S[exc_num:], repeat=length):
@@ -135,8 +138,11 @@ def freq_force(a, b, ans, freq=[1/len(string.ascii_letters) for _ in range(len(s
                 attempt = ''.join(attempt)
                 if attempt == ans:
                     return str(i)
+                if i >= 300000000:
+                    print("Greater than 300 million attempts ...giving up now")
+                    return -1
         if exc_num >= 1:
-            exc_num = int(exc_num/2)
+            exc_num = int(exc_num/2.0)
         else:
             exc_num = -1
     return -1
@@ -152,7 +158,7 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
     
     """
     attempts = 0
-    exc_num = [int(len(S_list[i])/1.3) for i in range(len(S_list))]
+    exc_num = [int(len(S_list[i])/2.0) for i in range(len(S_list))]
     
     while (sum(exc_num) >= 0):
         for length in range(a, b+1):
@@ -161,6 +167,9 @@ def freq_indiv_force(a, b, ans, freq_list, S_list):
                 guess = ''.join(guess)
                 if guess == ans:
                     return str(i)
+                if i >= 300000000:
+                    print("Greater than 300 million attempts ...giving up now")
+                    return -1
         for i in range(len(exc_num)):
             if exc_num[i] >= 1:
                 exc_num[i] = int(exc_num[i]/2)
@@ -177,11 +186,10 @@ def file_force(a, b, ans, common_list):
             i += 1
             if line.strip() == ans:
                 return i
+    print("password not in lookup file")
     return -1
 
 def test():
-
-
     lowercase_freq = []
     # Ascending order of letter freq in standard english
     lowercase      = ['z', 'j', 'q', 'x', 'k', 'v', 'b', 'p', 'g', 'w', 'y' 'f', 'm', 'c', 'u', 'l', 'd', 'h', 'r', 's', 'n', 'i', 'o', 'a', 't', 'e']
@@ -240,6 +248,66 @@ def test():
     # plt.title("Top 30 Most common length 4 substring Freq.")
     # plt.plot(Sn_sub1[:30], subn_test1[:30])
     # plt.show()
+    
+
+def demo(input_file, test_file):
+    
+    # Plot to demonstrate functionality of substrings
+    # It's much prefered to look at printed out list since x-axis gets so crowded
+    # cl, sl = length_n_substrings("examplefile.txt", 6)
+    # plt.plot(sl, cl)
+    # plt.title("Most common substrings")
+    # plt.show()
+
+
+    os.path.expanduser(u"~")
+
+    common_file = "random_1mill.txt" 
+    
+    # TRAIN AND PROCESS FILES     
+    freqi_list, Si_list = indiv_freq(input_file)
+    freqc_list, Sc_list = collect_freq(input_file)
+    print('Finished Training ...')
+    
+    plt.plot(Sc_list, freqc_list)
+    plt.title("Overall Char Freq")
+    plt.show()
+
+    for i in range(10):
+        plt.plot(Si_list[i], freqi_list[i])
+        plt.title("Char Freq. for " + str(i) + "th index")
+        plt.show()
+    
+    # Grab three random lines (file was already randomized so adjacent passwords aren't related)
+    rand = random.randint(0, 49998)
+    lines = []
+    with open(test_file) as f:
+        lines = list(itertools.islice(f, rand, rand+3))
+    
+    chl = []
+    
+    # For the sake of fast demo I only attempt to crack truncated size
+    for trunc, line in enumerate(lines):
+        chl.append(line[:4+trunc])
+    
+    for line in chl:
+
+        ans = line.strip()
+
+        print("Attempting to Brute Force : " + ans)
+        tries = brute_force(len(ans),len(ans),ans, string.letters + string.digits + string.punctuation)
+        if tries != -1:
+            print("Brute Force attempts on " + ans + " :" + str(tries))
+        
+        print("Attempting to Freq Force : " + ans)
+        tries = freq_force(len(ans),len(ans),ans, freqc_list, Sc_list[::-1])
+        if tries != -1:
+            print("Freq Force attempts on " + ans + " :" + str(tries))
+            
+        print("Attempting to Indiv Freq Force : " + ans)
+        tries = freq_indiv_force(len(ans), len(ans), ans, freqi_list, Si_list)
+        if tries != -1:
+            print("Indiv Freq attempts on " + ans + " :" + str(tries))
 
 def main():
     cprint(figlet_format('pwd-cracker', font='smkeyboard'))
@@ -248,11 +316,12 @@ def main():
     df  = input('Please specify a training file number [1-10]: ')
     while (df not in [x+1 for x in range(10)]):
         df  = input('Please specify a training file number [1-10]: ')
+    train = os.path.dirname(os.path.realpath('__file__')) + "/inputfiles/" + 'input_file' + str(df) + '.txt'
+    test  = os.path.dirname(os.path.realpath('__file__')) + "/inputfiles/" + 'test_file' + str(df) + '.txt'
+    print("Using " + train)
     
-    print('Using input_file' + str(df) + '.txt')
-    # @TODO train
-    print('Finished Training ...')
-    print('Cracking test_file' + str(df) + '.txt') 
+    demo(train,test)
+
     
-#main()
-test()
+main()
+#test()
