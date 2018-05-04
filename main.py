@@ -210,9 +210,9 @@ def test():
     freqo_large_list, So_large_list = collect_freq(common_file)
     
     print("Freq Force Attempts")
-    print(freq_force(4,6, "jesus1", freqo_large_list, So_large_list[::-1]))
+    print(freq_force(4,6, "jesus", freqo_large_list, So_large_list[::-1]))
     print("Indiv Freq Force Attempts")
-    print(freq_indiv_force(4,6,"jesus1",freq_large_list, S_large_list))
+    print(freq_indiv_force(4,6,"jesus",freq_large_list, S_large_list))
     
     # Uncomment for simple example of brute,freq, and file crackers
     """
@@ -335,4 +335,4 @@ def main():
     demo(train,test)
 
 main()
-#test()
+# test()
